@@ -84,7 +84,7 @@ function App() {
     // Record admin login
     const timestamp = new Date().toLocaleString();
     setLoginRecords([...loginRecords, {
-      email: 'sivapovas6381@gmail.com',
+      email: 'admin123@gmail.com',
       userType: 'Admin',
       timestamp,
       ipAddress: 'N/A'

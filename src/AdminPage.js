@@ -19,8 +19,8 @@ function AdminPage({ onLogout, loginData, adminVideos = {}, setAdminVideos = () 
   const [newCourseDesc, setNewCourseDesc] = useState('');
   const [newCourseDept, setNewCourseDept] = useState('Mech');
 
-  const ADMIN_EMAIL = 'sivapovas6381@gmail.com';
-  const ADMIN_PASSWORD = 'tharani';
+  const ADMIN_EMAIL = 'admin123@gmail.com';
+  const ADMIN_PASSWORD = 'admin@12345';
 
   const handleSubmit = (e) => {
     e.preventDefault();
