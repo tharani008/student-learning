@@ -19,6 +19,29 @@ function AdminPage({ onLogout, loginData, adminVideos = {}, setAdminVideos = () 
   const [newCourseDesc, setNewCourseDesc] = useState('');
   const [newCourseDept, setNewCourseDept] = useState('Mech');
 
+  // Payment Management State
+  const [paymentSettings, setPaymentSettings] = useState({
+    razorpayKeyId: 'rzp_test_xxxxxxxxxx',
+    razorpayKeySecret: 'rzp_test_xxxxxxx',
+    minAmount: 100,
+    maxAmount: 100000,
+    enablePartialPayment: true,
+    partialPaymentMinPercent: 25,
+    notificationEmail: 'admin@lasakedu.in',
+    enableSMS: true,
+    enableEmail: true,
+    enableReminders: true
+  });
+
+  const [studentPayments, setStudentPayments] = useState([
+    { id: 1, studentName: 'John Doe', email: 'john@example.com', amount: 5000, date: '2024-01-15', status: 'completed', paymentId: 'PAY_001' },
+    { id: 2, studentName: 'Jane Smith', email: 'jane@example.com', amount: 10000, date: '2024-02-20', status: 'completed', paymentId: 'PAY_002' },
+    { id: 3, studentName: 'Mike Johnson', email: 'mike@example.com', amount: 2500, date: '2024-03-10', status: 'pending', paymentId: null }
+  ]);
+
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [tempSettings, setTempSettings] = useState({ ...paymentSettings });
+
   const ADMIN_EMAIL = 'admin123@gmail.com';
   const ADMIN_PASSWORD = 'admin@12345';
 
@@ -130,6 +153,12 @@ function AdminPage({ onLogout, loginData, adminVideos = {}, setAdminVideos = () 
             onClick={() => setActiveTab('courses')}
           >
             Courses
+          </button>
+          <button 
+            className={`admin-nav-item ${activeTab === 'payments' ? 'active' : ''}`}
+            onClick={() => setActiveTab('payments')}
+          >
+            💳 Payments
           </button>
           <button 
             className={`admin-nav-item ${activeTab === 'logins' ? 'active' : ''}`}
@@ -390,6 +419,234 @@ function AdminPage({ onLogout, loginData, adminVideos = {}, setAdminVideos = () 
                   </div>
                 );
               })}
+            </div>
+          )}
+
+          {activeTab === 'payments' && (
+            <div className="admin-tables">
+              <div className="table-section">
+                <h2>Payment Management & Settings</h2>
+                
+                {/* Payment Statistics */}
+                <div className="payment-stats-grid">
+                  <div className="payment-stat-card">
+                    <div className="stat-icon">💰</div>
+                    <div className="stat-text">
+                      <p className="stat-label">Total Revenue</p>
+                      <p className="stat-value">₹{studentPayments.reduce((sum, p) => p.status === 'completed' ? sum + p.amount : sum, 0).toLocaleString()}</p>
+                    </div>
+                  </div>
+                  <div className="payment-stat-card">
+                    <div className="stat-icon">✅</div>
+                    <div className="stat-text">
+                      <p className="stat-label">Completed</p>
+                      <p className="stat-value">{studentPayments.filter(p => p.status === 'completed').length}</p>
+                    </div>
+                  </div>
+                  <div className="payment-stat-card">
+                    <div className="stat-icon">⏳</div>
+                    <div className="stat-text">
+                      <p className="stat-label">Pending</p>
+                      <p className="stat-value">{studentPayments.filter(p => p.status === 'pending').length}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Payment Settings Button */}
+                <div className="settings-button-container">
+                  <button 
+                    className="btn-payment-settings" 
+                    onClick={() => {
+                      setTempSettings({ ...paymentSettings });
+                      setShowPaymentModal(true);
+                    }}
+                  >
+                    ⚙️ Customize Payment Settings
+                  </button>
+                </div>
+
+                {/* Payments Table */}
+                <h3 style={{ marginTop: '30px' }}>Student Payments</h3>
+                <table className="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Student Name</th>
+                      <th>Email</th>
+                      <th>Amount (₹)</th>
+                      <th>Date</th>
+                      <th>Payment ID</th>
+                      <th>Status</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {studentPayments.map((payment) => (
+                      <tr key={payment.id}>
+                        <td>{payment.studentName}</td>
+                        <td>{payment.email}</td>
+                        <td>₹{payment.amount.toLocaleString()}</td>
+                        <td>{new Date(payment.date).toLocaleDateString('en-IN')}</td>
+                        <td>{payment.paymentId || 'Pending'}</td>
+                        <td>
+                          <span className={`status-badge ${payment.status}`}>
+                            {payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}
+                          </span>
+                        </td>
+                        <td>
+                          <button className="action-btn view">View</button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Payment Settings Modal */}
+          {showPaymentModal && (
+            <div className="modal-overlay">
+              <div className="payment-settings-modal">
+                <div className="modal-header">
+                  <h2>Payment Gateway Settings</h2>
+                  <button className="modal-close" onClick={() => setShowPaymentModal(false)}>✕</button>
+                </div>
+
+                <div className="modal-content payment-settings-content">
+                  <div className="settings-section">
+                    <h3>Razorpay API Configuration</h3>
+                    <div className="settings-form-group">
+                      <label>Razorpay Key ID</label>
+                      <input
+                        type="text"
+                        value={tempSettings.razorpayKeyId}
+                        onChange={(e) => setTempSettings({ ...tempSettings, razorpayKeyId: e.target.value })}
+                        placeholder="rzp_live_xxxxxxxxxx"
+                      />
+                    </div>
+                    <div className="settings-form-group">
+                      <label>Razorpay Key Secret</label>
+                      <input
+                        type="password"
+                        value={tempSettings.razorpayKeySecret}
+                        onChange={(e) => setTempSettings({ ...tempSettings, razorpayKeySecret: e.target.value })}
+                        placeholder="••••••••••••••"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="settings-section">
+                    <h3>Payment Amount Settings</h3>
+                    <div className="settings-form-row">
+                      <div className="settings-form-group">
+                        <label>Minimum Amount (₹)</label>
+                        <input
+                          type="number"
+                          value={tempSettings.minAmount}
+                          onChange={(e) => setTempSettings({ ...tempSettings, minAmount: parseInt(e.target.value) })}
+                          min="10"
+                        />
+                      </div>
+                      <div className="settings-form-group">
+                        <label>Maximum Amount (₹)</label>
+                        <input
+                          type="number"
+                          value={tempSettings.maxAmount}
+                          onChange={(e) => setTempSettings({ ...tempSettings, maxAmount: parseInt(e.target.value) })}
+                          max="1000000"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="settings-section">
+                    <h3>Partial Payment Settings</h3>
+                    <div className="settings-form-group checkbox">
+                      <label>
+                        <input
+                          type="checkbox"
+                          checked={tempSettings.enablePartialPayment}
+                          onChange={(e) => setTempSettings({ ...tempSettings, enablePartialPayment: e.target.checked })}
+                        />
+                        Enable Partial Payments
+                      </label>
+                    </div>
+                    {tempSettings.enablePartialPayment && (
+                      <div className="settings-form-group">
+                        <label>Minimum Partial Payment (%)</label>
+                        <input
+                          type="number"
+                          value={tempSettings.partialPaymentMinPercent}
+                          onChange={(e) => setTempSettings({ ...tempSettings, partialPaymentMinPercent: parseInt(e.target.value) })}
+                          min="10"
+                          max="100"
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="settings-section">
+                    <h3>Notification Settings</h3>
+                    <div className="settings-form-group">
+                      <label>Admin Notification Email</label>
+                      <input
+                        type="email"
+                        value={tempSettings.notificationEmail}
+                        onChange={(e) => setTempSettings({ ...tempSettings, notificationEmail: e.target.value })}
+                      />
+                    </div>
+                    <div className="settings-form-group checkbox">
+                      <label>
+                        <input
+                          type="checkbox"
+                          checked={tempSettings.enableSMS}
+                          onChange={(e) => setTempSettings({ ...tempSettings, enableSMS: e.target.checked })}
+                        />
+                        Enable SMS Notifications
+                      </label>
+                    </div>
+                    <div className="settings-form-group checkbox">
+                      <label>
+                        <input
+                          type="checkbox"
+                          checked={tempSettings.enableEmail}
+                          onChange={(e) => setTempSettings({ ...tempSettings, enableEmail: e.target.checked })}
+                        />
+                        Enable Email Notifications
+                      </label>
+                    </div>
+                    <div className="settings-form-group checkbox">
+                      <label>
+                        <input
+                          type="checkbox"
+                          checked={tempSettings.enableReminders}
+                          onChange={(e) => setTempSettings({ ...tempSettings, enableReminders: e.target.checked })}
+                        />
+                        Enable Payment Reminders
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="modal-footer">
+                  <button 
+                    className="btn-cancel" 
+                    onClick={() => setShowPaymentModal(false)}
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    className="btn-save" 
+                    onClick={() => {
+                      setPaymentSettings({ ...tempSettings });
+                      setShowPaymentModal(false);
+                      alert('Payment settings updated successfully!');
+                    }}
+                  >
+                    Save Settings
+                  </button>
+                </div>
+              </div>
             </div>
           )}
 

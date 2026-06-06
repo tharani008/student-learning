@@ -27,6 +27,20 @@ function Dashboard({ onLogout, onAdminAccess, adminVideos = {}, calendarLinks = 
     paySlips: []
   });
 
+  // Payment Gateway State
+  const [paymentTab, setPaymentTab] = useState('pay-now');
+  const [studentName, setStudentName] = useState('');
+  const [studentEmail, setStudentEmail] = useState('');
+  const [studentContact, setStudentContact] = useState('');
+  const [paymentAmount, setPaymentAmount] = useState('');
+  const [paymentDescription, setPaymentDescription] = useState('Course Fee Payment');
+  const [paymentHistory, setPaymentHistory] = useState([
+    { id: 1, date: '2024-01-15', amount: 5000, reference: 'STU001_001', status: 'completed', paymentId: 'PAY_001' },
+    { id: 2, date: '2024-02-20', amount: 10000, reference: 'STU001_002', status: 'completed', paymentId: 'PAY_002' },
+    { id: 3, date: '2024-03-10', amount: 2500, reference: 'STU001_003', status: 'pending', paymentId: null }
+  ]);
+  const [showPaymentAlert, setShowPaymentAlert] = useState(null);
+
   const departments = ['All', 'Mech', 'Civil', 'CSC/IT', 'Arts', 'Kids'];
 
   const toggleEnroll = (id) => {
@@ -112,6 +126,7 @@ function Dashboard({ onLogout, onAdminAccess, adminVideos = {}, calendarLinks = 
     { id: 'session', label: 'My Session' },
     { id: 'notification', label: 'Notification' },
     { id: 'documents', label: 'My Documents' },
+    { id: 'payment-gateway', label: '💳 Payment Gateway' },
     { id: 'support', label: 'Support' }
   ];
 
@@ -477,6 +492,220 @@ function Dashboard({ onLogout, onAdminAccess, adminVideos = {}, calendarLinks = 
     );
   };
 
+  const renderPaymentGateway = () => {
+    const completedPayments = paymentHistory.filter(p => p.status === 'completed');
+    const pendingPayments = paymentHistory.filter(p => p.status === 'pending');
+    const lastPaidAmount = completedPayments.length > 0 ? completedPayments[0].amount : null;
+
+    return (
+      <div className="payment-gateway-page">
+        {showPaymentAlert && (
+          <div className={`payment-alert payment-alert-${showPaymentAlert.type}`}>
+            <span className="alert-close" onClick={() => setShowPaymentAlert(null)}>✕</span>
+            {showPaymentAlert.message}
+          </div>
+        )}
+
+        <div className="payment-tabs-nav">
+          <button 
+            className={`payment-tab-btn ${paymentTab === 'pay-now' ? 'active' : ''}`}
+            onClick={() => setPaymentTab('pay-now')}
+          >
+            💸 Pay Now
+          </button>
+          <button 
+            className={`payment-tab-btn ${paymentTab === 'already-paid' ? 'active' : ''}`}
+            onClick={() => setPaymentTab('already-paid')}
+          >
+            ✅ Already Paid
+          </button>
+          <button 
+            className={`payment-tab-btn ${paymentTab === 'history' ? 'active' : ''}`}
+            onClick={() => setPaymentTab('history')}
+          >
+            📋 Payment History
+          </button>
+        </div>
+
+        {/* Pay Now Section */}
+        {paymentTab === 'pay-now' && (
+          <div className="payment-section pay-now-section">
+            <h2>Create Payment Link</h2>
+            <p className="section-subtitle">Generate a payment link to complete your payment securely</p>
+            
+            <form className="payment-form" onSubmit={(e) => {
+              e.preventDefault();
+              if (studentName && studentEmail && studentContact && paymentAmount) {
+                setShowPaymentAlert({
+                  type: 'success',
+                  message: `✓ Payment link created! Redirecting to Razorpay checkout for ₹${paymentAmount}...`
+                });
+                setTimeout(() => {
+                  // In real app, redirect to Razorpay
+                  alert(`Payment would be processed for ₹${paymentAmount}`);
+                }, 2000);
+              }
+            }}>
+              <div className="payment-form-row">
+                <div className="payment-form-group">
+                  <label>Student Name <span className="required">*</span></label>
+                  <input
+                    type="text"
+                    value={studentName}
+                    onChange={(e) => setStudentName(e.target.value)}
+                    placeholder="Enter your full name"
+                    required
+                  />
+                </div>
+                <div className="payment-form-group">
+                  <label>Email <span className="required">*</span></label>
+                  <input
+                    type="email"
+                    value={studentEmail}
+                    onChange={(e) => setStudentEmail(e.target.value)}
+                    placeholder="your.email@example.com"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="payment-form-row">
+                <div className="payment-form-group">
+                  <label>Contact Number <span className="required">*</span></label>
+                  <input
+                    type="tel"
+                    value={studentContact}
+                    onChange={(e) => setStudentContact(e.target.value)}
+                    placeholder="+91 XXXXX XXXXX"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="payment-form-group">
+                <label>Select Amount (₹) <span className="required">*</span></label>
+                <div className="amount-presets">
+                  <button type="button" className={`amount-preset ${paymentAmount === '5000' ? 'selected' : ''}`} onClick={() => setPaymentAmount('5000')}>₹5,000</button>
+                  <button type="button" className={`amount-preset ${paymentAmount === '10000' ? 'selected' : ''}`} onClick={() => setPaymentAmount('10000')}>₹10,000</button>
+                  <button type="button" className={`amount-preset ${paymentAmount === '25000' ? 'selected' : ''}`} onClick={() => setPaymentAmount('25000')}>₹25,000</button>
+                  <button type="button" className={`amount-preset ${paymentAmount === '50000' ? 'selected' : ''}`} onClick={() => setPaymentAmount('50000')}>₹50,000</button>
+                </div>
+              </div>
+
+              <div className="payment-form-row">
+                <div className="payment-form-group">
+                  <label>Custom Amount (₹)</label>
+                  <input
+                    type="number"
+                    value={paymentAmount}
+                    onChange={(e) => setPaymentAmount(e.target.value)}
+                    placeholder="Enter custom amount"
+                    min="100"
+                  />
+                </div>
+                <div className="payment-form-group">
+                  <label>Description</label>
+                  <input
+                    type="text"
+                    value={paymentDescription}
+                    onChange={(e) => setPaymentDescription(e.target.value)}
+                    placeholder="Payment description"
+                  />
+                </div>
+              </div>
+
+              <button type="submit" className="payment-submit-btn">Create Payment Link</button>
+            </form>
+          </div>
+        )}
+
+        {/* Already Paid Section */}
+        {paymentTab === 'already-paid' && (
+          <div className="payment-section already-paid-section">
+            <h2>Payment Status</h2>
+            
+            {lastPaidAmount ? (
+              <div className="payment-status-card completed">
+                <div className="status-icon">✅</div>
+                <div className="status-content">
+                  <h3>Payment Completed</h3>
+                  <div className="status-details">
+                    <p><strong>Last Payment Amount:</strong> ₹{lastPaidAmount.toLocaleString()}</p>
+                    <p><strong>Date:</strong> {new Date(completedPayments[0].date).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                    <p><strong>Payment ID:</strong> {completedPayments[0].paymentId}</p>
+                    <p><strong>Status:</strong> <span className="status-badge completed">Completed</span></p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="payment-status-card empty">
+                <div className="status-icon">❌</div>
+                <div className="status-content">
+                  <h3>No Payment Records</h3>
+                  <p>You haven't made any payments yet. Go to "Pay Now" to create a payment link.</p>
+                </div>
+              </div>
+            )}
+
+            {pendingPayments.length > 0 && (
+              <div className="pending-payments">
+                <h3>Pending Payments</h3>
+                {pendingPayments.map(payment => (
+                  <div key={payment.id} className="payment-status-card pending">
+                    <div className="status-icon">⏳</div>
+                    <div className="status-content">
+                      <p><strong>Amount Due:</strong> ₹{payment.amount.toLocaleString()}</p>
+                      <p><strong>Reference ID:</strong> {payment.reference}</p>
+                      <p><strong>Created:</strong> {new Date(payment.date).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                      <p><strong>Status:</strong> <span className="status-badge pending">Pending</span></p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Payment History Section */}
+        {paymentTab === 'history' && (
+          <div className="payment-section history-section">
+            <h2>Payment History</h2>
+            {paymentHistory.length === 0 ? (
+              <div className="empty-history">
+                <p>No payment history available.</p>
+              </div>
+            ) : (
+              <div className="payment-history-table">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Amount (₹)</th>
+                      <th>Reference ID</th>
+                      <th>Payment ID</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {paymentHistory.map((record) => (
+                      <tr key={record.id}>
+                        <td>{new Date(record.date).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' })}</td>
+                        <td>₹{record.amount.toLocaleString()}</td>
+                        <td>{record.reference}</td>
+                        <td>{record.paymentId || 'N/A'}</td>
+                        <td><span className={`status-badge ${record.status}`}>{record.status.charAt(0).toUpperCase() + record.status.slice(1)}</span></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const renderSupport = () => (
     <div className="support-page">
       <h2 className="support-title">Support</h2>
@@ -836,6 +1065,8 @@ function Dashboard({ onLogout, onAdminAccess, adminVideos = {}, calendarLinks = 
           ? renderMyCourses()
           : activeTopNav === 'session'
           ? renderSession()
+          : activeTopNav === 'payment-gateway'
+          ? renderPaymentGateway()
           : activeTopNav === 'support'
           ? renderSupport()
           : activeTopNav === 'documents'
