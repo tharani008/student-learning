@@ -6,6 +6,16 @@ import AdminPage from './AdminPage';
 import CustomCursor from './CustomCursor';
 
 function App() {
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem('app-theme') || 'light';
+  });
+
+  const toggleTheme = () => {
+    const nextTheme = theme === 'light' ? 'dark' : 'light';
+    setTheme(nextTheme);
+    localStorage.setItem('app-theme', nextTheme);
+  };
+
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isAdminView, setIsAdminView] = useState(false);
   const [loginRecords, setLoginRecords] = useState([]);
@@ -92,14 +102,14 @@ function App() {
   };
 
   return (
-    <div className="App">
+    <div className={`App ${theme}-theme`}>
       <CustomCursor />
       {isAdminView ? (
-        <AdminPage onLogout={handleLogout} loginData={loginRecords} adminVideos={adminUploadedVideos} setAdminVideos={setAdminUploadedVideos} calendarLinks={calendarLinks} setCalendarLinks={setCalendarLinks} addNotification={addNotification} adminCourses={adminCourses} setAdminCourses={setAdminCourses} users={users} removeUser={removeUser} studentCredentials={loginRecords[loginRecords.length - 1]} onAdminLogin={handleAdminLogin} />
+        <AdminPage onLogout={handleLogout} loginData={loginRecords} adminVideos={adminUploadedVideos} setAdminVideos={setAdminUploadedVideos} calendarLinks={calendarLinks} setCalendarLinks={setCalendarLinks} addNotification={addNotification} adminCourses={adminCourses} setAdminCourses={setAdminCourses} users={users} removeUser={removeUser} studentCredentials={loginRecords[loginRecords.length - 1]} onAdminLogin={handleAdminLogin} theme={theme} toggleTheme={toggleTheme} />
       ) : isLoggedIn ? (
-        <Dashboard onLogout={handleLogout} onAdminAccess={handleAdminAccess} adminVideos={adminUploadedVideos} calendarLinks={calendarLinks} notifications={notifications} adminCourses={adminCourses} />
+        <Dashboard onLogout={handleLogout} onAdminAccess={handleAdminAccess} adminVideos={adminUploadedVideos} calendarLinks={calendarLinks} notifications={notifications} adminCourses={adminCourses} theme={theme} toggleTheme={toggleTheme} />
       ) : (
-        <LoginPage onLogin={handleLogin} onAdminAccess={handleAdminAccess} />
+        <LoginPage onLogin={handleLogin} onAdminAccess={handleAdminAccess} theme={theme} toggleTheme={toggleTheme} />
       )}
     </div>
   );

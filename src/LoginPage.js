@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './LoginPage.css';
 
-function LoginPage({ onLogin, onAdminAccess }) {
+function LoginPage({ onLogin, onAdminAccess, theme, toggleTheme }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -44,6 +44,9 @@ function LoginPage({ onLogin, onAdminAccess }) {
 
   return (
     <div className="login-container">
+      <button className="theme-toggle-btn" onClick={toggleTheme} aria-label="Toggle Theme">
+        {theme === 'light' ? '🌙' : '☀️'}
+      </button>
       <div className="login-box">
         <h1 className="login-title">Login</h1>
         <form onSubmit={handleSubmit}>

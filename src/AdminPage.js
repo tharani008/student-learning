@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './AdminPage.css';
 
-function AdminPage({ onLogout, loginData, adminVideos = {}, setAdminVideos = () => {}, calendarLinks = {}, setCalendarLinks = () => {}, addNotification = () => {}, adminCourses = [], setAdminCourses = () => {}, users = [], removeUser = () => {}, studentCredentials, onAdminLogin = () => {} }) {
+function AdminPage({ onLogout, loginData, adminVideos = {}, setAdminVideos = () => {}, calendarLinks = {}, setCalendarLinks = () => {}, addNotification = () => {}, adminCourses = [], setAdminCourses = () => {}, users = [], removeUser = () => {}, studentCredentials, onAdminLogin = () => {}, theme, toggleTheme }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -89,6 +89,9 @@ function AdminPage({ onLogout, loginData, adminVideos = {}, setAdminVideos = () 
   if (!isLoggedIn) {
     return (
       <div className="admin-login-container">
+        <button className="theme-toggle-btn" onClick={toggleTheme} aria-label="Toggle Theme">
+          {theme === 'light' ? '🌙' : '☀️'}
+        </button>
         <div className="admin-login-box">
           <h1 className="admin-title">Admin Portal</h1>
           <p className="admin-subtitle">Administrator Access Only</p>
@@ -135,6 +138,9 @@ function AdminPage({ onLogout, loginData, adminVideos = {}, setAdminVideos = () 
         <div className="admin-sidebar-header">
           <h2>Admin Panel</h2>
         </div>
+        <button className="admin-theme-toggle" onClick={toggleTheme} aria-label="Toggle Theme">
+          {theme === 'light' ? '🌙 Dark Mode' : '☀️ Light Mode'}
+        </button>
         <nav className="admin-nav">
           <button 
             className={`admin-nav-item ${activeTab === 'dashboard' ? 'active' : ''}`}

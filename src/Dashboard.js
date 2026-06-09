@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import './Dashboard.css';
 import logo from './logo.png';
 
-function Dashboard({ onLogout, onAdminAccess, adminVideos = {}, calendarLinks = {}, notifications = [], adminCourses = [] }) {
+function Dashboard({ onLogout, onAdminAccess, adminVideos = {}, calendarLinks = {}, notifications = [], adminCourses = [], theme, toggleTheme }) {
   const [activeNav, setActiveNav] = useState('courses');
   const [activeTopNav, setActiveTopNav] = useState(null);
   const [showVideoModal, setShowVideoModal] = useState(false);
@@ -40,6 +40,7 @@ function Dashboard({ onLogout, onAdminAccess, adminVideos = {}, calendarLinks = 
     { id: 3, date: '2024-03-10', amount: 2500, reference: 'STU001_003', status: 'pending', paymentId: null }
   ]);
   const [showPaymentAlert, setShowPaymentAlert] = useState(null);
+  const [paidSlips, setPaidSlips] = useState([]);
 
   const departments = ['All', 'Mech', 'Civil', 'CSC/IT', 'Arts', 'Kids'];
 
@@ -443,37 +444,57 @@ function Dashboard({ onLogout, onAdminAccess, adminVideos = {}, calendarLinks = 
               </div>
               <div className="form-group">
                 <label>Joining Letter or Relieving Letter <span className="required">*</span></label>
-                <small className="field-hint">Accepted formats: PDF, DOC, DOCX, JPG, PNG</small>
+                <small className="field-hint">Accepted formats: PDF, DOC, DOCX, JPG, PNG (Max 5MB)</small>
                 <label htmlFor="joining-letter" className="file-upload-doc">
                   <input
                     id="joining-letter"
                     type="file"
                     accept=".pdf,.doc,.docx,.jpg,.png"
-                    onChange={(e) => setDocuments({...documents, joiningLetter: e.target.files[0]})}
+                    onChange={(e) => {
+                      const file = e.target.files[0];
+                      if (file && file.size <= 5242880) {
+                        setDocuments({...documents, joiningLetter: file});
+                      } else {
+                        alert('File size exceeds 5MB limit');
+                      }
+                    }}
                     required={!documents.joiningLetter}
                   />
-                  <span>Click to upload or drag & drop</span>
-                  {documents.joiningLetter && <p className="file-success">✓ {documents.joiningLetter.name}</p>}
+                  <div className="upload-area-main">
+                    <span className="upload-icon-main-doc">📤</span>
+                    <p className="upload-text">Click to browse or drag & drop your file</p>
+                  </div>
+                  {documents.joiningLetter && <p className="file-success-doc">✓ {documents.joiningLetter.name}</p>}
                 </label>
               </div>
               <div className="form-group">
                 <label>Pay Slips <span className="required">*</span> (Multiple files allowed)</label>
-                <small className="field-hint">Upload at least 1 recent pay slip. Accepted formats: PDF, DOC, DOCX, JPG, PNG</small>
+                <small className="field-hint">Upload at least 1 recent pay slip. Max 5MB per file, up to 10 files</small>
                 <label htmlFor="pay-slips" className="file-upload-doc">
                   <input
                     id="pay-slips"
                     type="file"
                     multiple
                     accept=".pdf,.doc,.docx,.jpg,.png"
-                    onChange={(e) => setDocuments({...documents, paySlips: Array.from(e.target.files)})}
+                    onChange={(e) => {
+                      const files = Array.from(e.target.files);
+                      const validFiles = files.filter(f => f.size <= 5242880);
+                      if (validFiles.length < files.length) {
+                        alert(`${files.length - validFiles.length} file(s) exceed 5MB limit and were not added`);
+                      }
+                      setDocuments({...documents, paySlips: validFiles.slice(0, 10)});
+                    }}
                     required={documents.paySlips.length === 0}
                   />
-                  <span>Click to upload or drag & drop</span>
+                  <div className="upload-area-main">
+                    <span className="upload-icon-main-doc">📎</span>
+                    <p className="upload-text">Click to browse or drag & drop files</p>
+                  </div>
                   {documents.paySlips.length > 0 && (
-                    <div className="file-list">
-                      <p className="file-count">{documents.paySlips.length} file(s) uploaded</p>
+                    <div className="file-list-doc">
+                      <p className="file-count-doc">{documents.paySlips.length} file(s) selected</p>
                       {documents.paySlips.map((file, idx) => (
-                        <p key={idx} className="file-item">✓ {file.name}</p>
+                        <p key={idx} className="file-item-doc">✓ {file.name} ({(file.size / 1024 / 1024).toFixed(2)}MB)</p>
                       ))}
                     </div>
                   )}
@@ -663,6 +684,131 @@ function Dashboard({ onLogout, onAdminAccess, adminVideos = {}, calendarLinks = 
                 ))}
               </div>
             )}
+
+            {/* Already Paid Slips Upload Section */}
+            <div className="paid-slips-section">
+              <div className="slips-header-container">
+                <div className="slips-header-text">
+                  <h3>Upload Payment Documentation</h3>
+                  <p className="section-description">Attach payment proof to complete verification. Supported formats: PDF, Images, Office documents</p>
+                </div>
+              </div>
+              
+              <div className="file-upload-container">
+                <label className="file-upload-label">
+                  <input 
+                    type="file" 
+                    multiple 
+                    accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                    onChange={(e) => {
+                      const files = Array.from(e.target.files || []);
+                      files.forEach(file => {
+                        const maxSize = 5242880; // 5MB
+                        const validTypes = ['application/pdf', 'image/jpeg', 'image/png', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+                        
+                        if (file.size > maxSize) {
+                          setShowPaymentAlert({
+                            type: 'error',
+                            message: `✗ "${file.name}" exceeds 5MB size limit. File size: ${(file.size / 1024 / 1024).toFixed(2)}MB`
+                          });
+                          return;
+                        }
+                        
+                        if (!validTypes.includes(file.type)) {
+                          setShowPaymentAlert({
+                            type: 'error',
+                            message: `✗ "${file.name}" is not a supported file format`
+                          });
+                          return;
+                        }
+
+                        const fileTypeMap = {
+                          'application/pdf': '📄',
+                          'image/jpeg': '🖼️',
+                          'image/png': '🖼️',
+                          'application/msword': '📋',
+                          'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '📋'
+                        };
+
+                        setPaidSlips(prev => [...prev, {
+                          id: Date.now() + Math.random(),
+                          name: file.name,
+                          size: (file.size / 1024 / 1024).toFixed(2),
+                          uploadDate: new Date().toLocaleDateString('en-IN'),
+                          type: file.type,
+                          icon: fileTypeMap[file.type] || '📎'
+                        }]);
+                        setShowPaymentAlert({
+                          type: 'success',
+                          message: `✓ "${file.name}" has been added successfully`
+                        });
+                      });
+                    }}
+                  />
+                  <div className="file-upload-box">
+                    <div className="upload-icon-main">📤</div>
+                    <h4>Drag and drop files here</h4>
+                    <p>or click to browse from your device</p>
+                    <span className="file-format-hint">PDF, JPG, PNG, DOC up to 5MB</span>
+                  </div>
+                </label>
+              </div>
+
+              {/* Uploaded Files List */}
+              {paidSlips.length > 0 && (
+                <div className="uploaded-slips-list">
+                  <div className="slips-list-header">
+                    <h4>Attached Files</h4>
+                    <span className="file-count-badge">{paidSlips.length} file{paidSlips.length !== 1 ? 's' : ''}</span>
+                  </div>
+                  <div className="slips-table">
+                    {paidSlips.map((slip, idx) => (
+                      <div key={slip.id} className="slips-row">
+                        <div className="slip-info">
+                          <span className="slip-icon">{slip.icon}</span>
+                          <div className="slip-details">
+                            <p className="slip-name">{slip.name}</p>
+                            <span className="slip-meta">{slip.size}MB • {slip.uploadDate}</span>
+                          </div>
+                        </div>
+                        <div className="slip-actions">
+                          <button 
+                            className="slip-delete-btn"
+                            title="Remove file"
+                            onClick={() => {
+                              const fileName = slip.name;
+                              setPaidSlips(prev => prev.filter(s => s.id !== slip.id));
+                              setShowPaymentAlert({
+                                type: 'success',
+                                message: `✓ "${fileName}" has been removed`
+                              });
+                            }}
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <button 
+                    className="submit-slips-btn"
+                    onClick={() => {
+                      setShowPaymentAlert({
+                        type: 'success',
+                        message: `✓ ${paidSlips.length} document${paidSlips.length !== 1 ? 's' : ''} submitted for verification successfully`
+                      });
+                      setTimeout(() => {
+                        setPaidSlips([]);
+                      }, 2000);
+                    }}
+                  >
+                    <span className="btn-icon">✓</span>
+                    Submit {paidSlips.length} Document{paidSlips.length !== 1 ? 's' : ''} for Verification
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
@@ -928,6 +1074,9 @@ function Dashboard({ onLogout, onAdminAccess, adminVideos = {}, calendarLinks = 
             </div>
           ))}
         </div>
+        <button className="navbar-theme-toggle" onClick={toggleTheme} aria-label="Toggle Theme">
+          {theme === 'light' ? '🌙' : '☀️'}
+        </button>
         <img src={logo} alt="Logo" className="navbar-logo" />
       </div>
 
